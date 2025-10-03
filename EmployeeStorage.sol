@@ -1,73 +1,61 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.0;
 
-contract StorageV2 {
+contract EmployeeStorage {
     // --- State Variables ---
-    // Daha iyi packing / okunabilirlik için ordering’e dikkat ettim
+    // Combine storage slots / packing için optimal düzenleme yapılmalı
 
-    // Employee bilgileri
+    // shares ve salary’yi aynı slotta paketlemek mümkün olabilir
+    // Çünkü salary 0..1_000_000 aralığında => ~20 bit’lik değer yeterli
+    // shares ise büyük değerler alabilir (uint256), ama burada optimize etmeye çalışacağız
+
+    uint256 private shares;    // 256 bit — tam genişlik kullandık
+    uint32 private salary;     // 32 bit, 1.000.000 < 2^20 olduğundan 32 bit yeterli
+
     string public name;
     uint256 public idNumber;
 
-    // shares ve salary, aynı slot’a sıkıştırılabilir (packing)
-    uint32 private salary;     // 4 byte
-    uint224 private shares;    // 28 byte → toplam 32 byte
-
-    // Diğer durumlar için hata
+    // Custom error
     error TooManyShares(uint256 wouldBeShares);
 
     // --- Constructor ---
-    constructor(
-        string memory _name,
-        uint256 _id,
-        uint224 _initialShares,
-        uint32 _initialSalary
-    ) {
-        name = _name;
-        idNumber = _id;
-        shares = _initialShares;
-        salary = _initialSalary;
+    constructor() {
+        shares = 1000;
+        name = "Pat";
+        salary = 50000;
+        idNumber = 112358132134;
     }
 
-    // --- View Fonksiyonları ---
+    // --- View Functions ---
     function viewSalary() public view returns (uint32) {
         return salary;
     }
 
-    function viewShares() public view returns (uint224) {
+    function viewShares() public view returns (uint256) {
         return shares;
     }
 
-    // --- Share verme / alma işlemi ---
-    function grantShares(uint224 _newShares) public {
-        // Basit sınır kontrolü
+    // --- Grant Shares ---
+    function grantShares(uint256 _newShares) public {
+        // Eğer _newShares > 5000, revert ile string mesaj
         if (_newShares > 5000) {
             revert("Too many shares");
         }
-        uint256 newTotal = uint256(shares) + uint256(_newShares);
+        uint256 newTotal = shares + _newShares;
         if (newTotal > 5000) {
             revert TooManyShares(newTotal);
         }
-        shares = uint224(newTotal);
+        shares = newTotal;
     }
 
-    function reduceShares(uint224 _removeShares) public {
-        if (_removeShares > shares) {
-            revert("Cannot remove more than existing");
-        }
-        shares = shares - _removeShares;
-    }
-
-    // --- Debug / yardımcı fonksiyonlar ---
-    /// @notice Storage slot içeriğini düşük seviyeli okumak için (örneğin inspect amaçlı)
-    function checkSlot(uint256 slot) public view returns (bytes32 data) {
+    // --- Fonksiyonlar test için verildiği şekilde ---
+    function checkForPacking(uint _slot) public view returns (uint r) {
         assembly {
-            data := sload(slot)
+            r := sload(_slot)
         }
     }
 
-    /// @notice Shares değerini sıfırlayıp başlangıç değerine çekmek için
-    function resetShares(uint224 _to) public {
-        shares = _to;
+    function debugResetShares() public {
+        shares = 1000;
     }
 }
