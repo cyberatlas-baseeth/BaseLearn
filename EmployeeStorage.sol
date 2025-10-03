@@ -1,61 +1,54 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.17;
 
 contract EmployeeStorage {
-    // --- State Variables ---
-    // Combine storage slots / packing için optimal düzenleme yapılmalı
+    // Çalışan verilerini saklamak için özel durum değişkenleri tanımlayın
+    uint16 private shares; // Çalışanın sahip olduğu hisse sayısı (sözleşmeye özel)
+    uint32 private salary; // Çalışanın aylık maaşı (sözleşmeye özel)
+    uint256 public idNumber; // Çalışanın benzersiz kimlik numarası (herkese açık)
+    string public name; // Çalışanın adı (herkese açık)
 
-    // shares ve salary’yi aynı slotta paketlemek mümkün olabilir
-    // Çünkü salary 0..1_000_000 aralığında => ~20 bit’lik değer yeterli
-    // shares ise büyük değerler alabilir (uint256), ama burada optimize etmeye çalışacağız
-
-    uint256 private shares;    // 256 bit — tam genişlik kullandık
-    uint32 private salary;     // 32 bit, 1.000.000 < 2^20 olduğundan 32 bit yeterli
-
-    string public name;
-    uint256 public idNumber;
-
-    // Custom error
-    error TooManyShares(uint256 wouldBeShares);
-
-    // --- Constructor ---
-    constructor() {
-        shares = 1000;
-        name = "Pat";
-        salary = 50000;
-        idNumber = 112358132134;
+    // Sözleşme dağıtıldığında çalışan verilerini başlatmak için yapıcı fonksiyon
+    constructor(uint16 _shares, string memory _name, uint32 _salary, uint _idNumber) {
+        shares = _shares; // Hisse sayısını başlat
+        name = _name; // Adı başlat
+        salary = _salary; // Maaşı başlat
+        idNumber = _idNumber; // Kimlik numarasını başlat
     }
 
-    // --- View Functions ---
+    // Çalışanın sahip olduğu hisse sayısını almak için görüntüleme fonksiyonu
+    function viewShares() public view returns (uint16) {
+        return shares;
+    }
+    
+    // Çalışanın aylık maaşını almak için görüntüleme fonksiyonu
     function viewSalary() public view returns (uint32) {
         return salary;
     }
 
-    function viewShares() public view returns (uint256) {
-        return shares;
-    }
-
-    // --- Grant Shares ---
-    function grantShares(uint256 _newShares) public {
-        // Eğer _newShares > 5000, revert ile string mesaj
+    // Özel hata bildirimi
+    error TooManyShares(uint16 _shares);
+    
+    // Çalışana ek hisse vermek için fonksiyon
+    function grantShares(uint16 _newShares) public {
+        // Talep edilen hisse sayısının limiti aşıp aşmadığını kontrol et
         if (_newShares > 5000) {
-            revert("Too many shares");
+            revert("Çok fazla hisse"); // Hata mesajıyla işlemi geri al
+        } else if (shares + _newShares > 5000) {
+            revert TooManyShares(shares + _newShares); // Özel hata mesajıyla işlemi geri al
         }
-        uint256 newTotal = shares + _newShares;
-        if (newTotal > 5000) {
-            revert TooManyShares(newTotal);
-        }
-        shares = newTotal;
+        shares += _newShares; // Yeni hisseleri ver
     }
 
-    // --- Fonksiyonlar test için verildiği şekilde ---
+    // Depolama değişkenlerinin paketlenmesini test etmek için kullanılan fonksiyon (ana işlevsellikle ilgili değil)
     function checkForPacking(uint _slot) public view returns (uint r) {
         assembly {
-            r := sload(_slot)
+            r := sload (_slot)
         }
     }
 
+    // Hata ayıklama amacıyla hisseleri sıfırlama fonksiyonu (ana işlevsellikle ilgili değil)
     function debugResetShares() public {
-        shares = 1000;
+        shares = 1000; // Hisseleri 1000'e sıfırla
     }
 }
