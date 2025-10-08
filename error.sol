@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.17;
 
-/**
- * @title ErrorTriageExercise
- * @dev Fark hesaplama, sayı değiştirici (modifier) uygulama ve dizilerle çalışma örneklerini içeren sözleşme
- */
 contract ErrorTriageExercise {
     /**
-     * @dev Verilen 4 sayının (a, b, c, d) birbirine komşu farklarını bulur.
-     * Her iki komşu sayı arasındaki mutlak farkı alır ve bir dizi olarak döndürür.
-     *
-     * Örnek:
-     *   a=10, b=5, c=12, d=9
-     *   Sonuç: [|10-5|, |5-12|, |12-9|] → [5, 7, 3]
+     * @dev Finds the difference between each uint with its neighbor (a to b, b to c, etc.)
+     * and returns a uint array with the absolute integer difference of each pairing.
+     * 
+     * @param _a The first unsigned integer.
+     * @param _b The second unsigned integer.
+     * @param _c The third unsigned integer.
+     * @param _d The fourth unsigned integer.
+     * 
+     * @return results An array containing the absolute differences between each pair of integers.
      */
     function diffWithNeighbor(
         uint _a,
@@ -20,79 +20,58 @@ contract ErrorTriageExercise {
         uint _c,
         uint _d
     ) public pure returns (uint[] memory) {
-        // 3 fark hesaplanacağı için uzunluğu 3 olan bir dizi tanımlanır
-        uint ;
+        // Initialize an array to store the differences
+        uint[] memory results = new uint[](3);
 
-        // Her komşu sayı arasındaki mutlak fark hesaplanır
-        results[0] = _a > _b ? _a - _b : _b - _a; // |a - b|
-        results[1] = _b > _c ? _b - _c : _c - _b; // |b - c|
-        results[2] = _c > _d ? _c - _d : _d - _c; // |c - d|
+        // Calculate the absolute difference between each pair of integers and store it in the results array
+        results[0] = _a > _b ? _a - _b : _b - _a;
+        results[1] = _b > _c ? _b - _c : _c - _b;
+        results[2] = _c > _d ? _c - _d : _d - _c;
 
-        // Sonuç dizisi döndürülür
+        // Return the array of differences
         return results;
     }
 
     /**
-     * @dev Verilen "_base" değerine "_modifier" ekler veya çıkarır.
-     * "_base" her zaman >= 1000’dir.
-     * "_modifier" -100 ile +100 arasında bir tam sayıdır (negatif veya pozitif olabilir).
-     *
-     * Solidity’de uint (işaretsiz) ve int (işaretli) türleri doğrudan toplanamaz.
-     * Bu yüzden koşul kontrolü yapılarak tür dönüşümü yapılır.
+     * @dev Changes the base by the value of the modifier. Base is always >= 1000. Modifiers can be
+     * between positive and negative 100.
+     * 
+     * @param _base The base value to be modified.
+     * @param _modifier The value by which the base should be modified.
+     * 
+     * @return returnValue The modified value of the base.
      */
     function applyModifier(
         uint _base,
         int _modifier
-    ) public pure returns (uint) {
-        if (_modifier >= 0) {
-            // Modifier pozitifse uint’e çevirilip eklenir
+    ) public pure returns (uint returnValue) {
+        // Apply the modifier to the base value
+        if(_modifier > 0) {
             return _base + uint(_modifier);
-        } else {
-            // Modifier negatifse işaret değiştirip uint’e çevirilir ve çıkarılır
-            return _base - uint(-_modifier);
+        }
+        return _base - uint(-_modifier);
+    }
+
+
+    uint[] arr;
+
+    function popWithReturn() public returns (uint returnNum) {
+        if(arr.length > 0) {
+            uint result = arr[arr.length - 1];
+            arr.pop();
+            return result;
         }
     }
 
-    /**
-     * @dev Sözleşme içinde tutulan "arr" adlı dinamik diziyi temsil eder.
-     * Bu diziye sayılar eklenebilir, sıfırlanabilir veya eleman silinebilir.
-     */
-    uint[] arr;
-
-    /**
-     * @dev Dizinin son elemanını siler (pop işlemi gibi) ve silinen değeri döndürür.
-     * Solidity’nin yerleşik "pop()" fonksiyonu değeri döndürmez,
-     * bu fonksiyon ise sildiği değeri döndürür.
-     *
-     * ⚠️ Uyarı:
-     * - Bu fonksiyon dizideki son değeri sıfırlar ama dizinin uzunluğunu azaltmaz.
-     * - Gerçek "pop()" işlemi gibi eleman sayısını azaltmak için "arr.pop()" kullanılmalıdır.
-     */
-    function popWithReturn() public returns (uint) {
-        uint index = arr.length - 1; // Son elemanın indeksi
-        delete arr[index];           // Son eleman silinir (0’a set edilir)
-        return arr[index];           // Silinen değer (artık 0) döndürülür
-    }
-
-    /**
-     * @dev Diziye yeni bir sayı ekler.
-     * @param _num Eklenecek sayı
-     */
+    // The utility functions below are working as expected
     function addToArr(uint _num) public {
         arr.push(_num);
     }
 
-    /**
-     * @dev Dizi içeriğini görüntüler.
-     * @return Bellekteki dizinin bir kopyası döndürülür
-     */
     function getArr() public view returns (uint[] memory) {
         return arr;
     }
 
-    /**
-     * @dev Dizi içeriğini tamamen siler ve sıfırlar.
-     */
     function resetArr() public {
         delete arr;
     }
