@@ -1,50 +1,61 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-// OpenZeppelin ERC721 sözleşmesini içe aktarma
+
+// Importing OpenZeppelin ERC721 contract
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol";
-// Göçmen sözleşmesiyle etkileşim için arayüz
+
+// Interface for interacting with a submission contract
 interface ISubmission {
-    // Haiku'yu temsil eden yapı
+    // Struct representing a haiku
     struct Haiku {
-        address author; // Haiku'nun yazarı adresi
-        string line1; // Haiku'nun ilk satırı
-        string line2; // Haiku'nun ikinci satırı
-        string line3; // Haiku'nun üçüncü satırı
+        address author; // Address of the haiku author
+        string line1; // First line of the haiku
+        string line2; // Second line of the haiku
+        string line3; // Third line of the haiku
     }
-    // Yeni bir haiku basma fonksiyonu
+
+    // Function to mint a new haiku
     function mintHaiku(
         string memory _line1,
         string memory _line2,
         string memory _line3
     ) external;
-    // Toplam haiku sayısını alma fonksiyonu
+
+    // Function to get the total number of haikus
     function counter() external view returns (uint256);
-    // Bir haiku'yu başka bir adresle paylaşma fonksiyonu
+
+    // Function to share a haiku with another address
     function shareHaiku(uint256 _id, address _to) external;
-    // Çağıranla paylaşılan haikuları alma fonksiyonu
+
+    // Function to get haikus shared with the caller
     function getMySharedHaikus() external view returns (Haiku[] memory);
 }
-// Haiku NFT'lerini yönetmek için sözleşme
+
+// Contract for managing Haiku NFTs
 contract HaikuNFT is ERC721, ISubmission {
-    Haiku[] public haikus; // Haikuları saklamak için dizi
-    mapping(address => mapping(uint256 => bool)) public sharedHaikus; // Paylaşılan haikuları takip etmek için eşleme
-    uint256 public haikuCounter; // Basılan toplam haiku sayacı
-    // ERC721 sözleşmesini başlatmak için yapıcı
+    Haiku[] public haikus; // Array to store haikus
+    mapping(address => mapping(uint256 => bool)) public sharedHaikus; // Mapping to track shared haikus
+    uint256 public haikuCounter; // Counter for total haikus minted
+
+    // Constructor to initialize the ERC721 contract
     constructor() ERC721("HaikuNFT", "HAIKU") {
-        haikuCounter = 1; // Haiku sayacını başlat
+        haikuCounter = 1; // Initialize haiku counter
     }
-    string salt = "value"; // Özel bir dize değişkeni
-    // Toplam haiku sayısını alma fonksiyonu
+
+    string salt = "value"; // A private string variable
+
+    // Function to get the total number of haikus
     function counter() external view override returns (uint256) {
         return haikuCounter;
     }
-    // Yeni bir haiku basma fonksiyonu
+
+    // Function to mint a new haiku
     function mintHaiku(
         string memory _line1,
         string memory _line2,
         string memory _line3
     ) external override {
-        // Haiku'nun benzersiz olup olmadığını kontrol et
+        // Check if the haiku is unique
         string[3] memory haikusStrings = [_line1, _line2, _line3];
         for (uint256 li = 0; li < haikusStrings.length; li++) {
             string memory newLine = haikusStrings[li];
@@ -68,19 +79,24 @@ contract HaikuNFT is ERC721, ISubmission {
                 }
             }
         }
-        // Haiku NFT'sini bas
+
+        // Mint the haiku NFT
         _safeMint(msg.sender, haikuCounter);
         haikus.push(Haiku(msg.sender, _line1, _line2, _line3));
         haikuCounter++;
     }
-    // Bir haiku'yu başka bir adresle paylaşma fonksiyonu
+
+    // Function to share a haiku with another address
     function shareHaiku(uint256 _id, address _to) external override {
-        require(_id > 0 && _id <= haikuCounter, "Geçersiz haiku kimliği");
+        require(_id > 0 && _id <= haikuCounter, "Invalid haiku ID");
+
         Haiku memory haikuToShare = haikus[_id - 1];
-        require(haikuToShare.author == msg.sender, "Bu sizin haiku'nuz değil");
+        require(haikuToShare.author == msg.sender, "NotYourHaiku");
+
         sharedHaikus[_to][_id] = true;
     }
-    // Çağıranla paylaşılan haikuları alma fonksiyonu
+
+    // Function to get haikus shared with the caller
     function getMySharedHaikus()
         external
         view
@@ -93,6 +109,7 @@ contract HaikuNFT is ERC721, ISubmission {
                 sharedHaikuCount++;
             }
         }
+
         Haiku[] memory result = new Haiku[](sharedHaikuCount);
         uint256 currentIndex;
         for (uint256 i = 0; i < haikus.length; i++) {
@@ -101,13 +118,16 @@ contract HaikuNFT is ERC721, ISubmission {
                 currentIndex++;
             }
         }
+
         if (sharedHaikuCount == 0) {
             revert NoHaikusShared();
         }
+
         return result;
     }
-    // Özel hata mesajları
-    error HaikuNotUnique(); // Benzersiz olmayan bir haiku basmaya çalışırken hata
-    error NotYourHaiku(); // Çağıranın sahip olmadığı bir haiku'yu paylaşmaya çalışırken hata
-    error NoHaikusShared(); // Çağıranla paylaşılmış haiku bulunmadığında hata
+
+    // Custom errors
+    error HaikuNotUnique(); // Error for attempting to mint a non-unique haiku
+    error NotYourHaiku(); // Error for attempting to share a haiku not owned by the caller
+    error NoHaikusShared(); // Error for no haikus shared with the caller
 }
