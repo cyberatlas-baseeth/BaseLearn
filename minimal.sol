@@ -1,133 +1,51 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Importing OpenZeppelin ERC721 contract
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol";
+// Contract for an unburnable token
+contract UnburnableToken {
+    string private salt = "value"; // A private string variable
 
-// Interface for interacting with a submission contract
-interface ISubmission {
-    // Struct representing a haiku
-    struct Haiku {
-        address author; // Address of the haiku author
-        string line1; // First line of the haiku
-        string line2; // Second line of the haiku
-        string line3; // Third line of the haiku
-    }
+    // Mapping to track token balances of addresses
+    mapping(address => uint256) public balances;
 
-    // Function to mint a new haiku
-    function mintHaiku(
-        string memory _line1,
-        string memory _line2,
-        string memory _line3
-    ) external;
-
-    // Function to get the total number of haikus
-    function counter() external view returns (uint256);
-
-    // Function to share a haiku with another address
-    function shareHaiku(uint256 _id, address _to) external;
-
-    // Function to get haikus shared with the caller
-    function getMySharedHaikus() external view returns (Haiku[] memory);
-}
-
-// Contract for managing Haiku NFTs
-contract HaikuNFT is ERC721, ISubmission {
-    Haiku[] public haikus; // Array to store haikus
-    mapping(address => mapping(uint256 => bool)) public sharedHaikus; // Mapping to track shared haikus
-    uint256 public haikuCounter; // Counter for total haikus minted
-
-    // Constructor to initialize the ERC721 contract
-    constructor() ERC721("HaikuNFT", "HAIKU") {
-        haikuCounter = 1; // Initialize haiku counter
-    }
-
-    string salt = "value"; // A private string variable
-
-    // Function to get the total number of haikus
-    function counter() external view override returns (uint256) {
-        return haikuCounter;
-    }
-
-    // Function to mint a new haiku
-    function mintHaiku(
-        string memory _line1,
-        string memory _line2,
-        string memory _line3
-    ) external override {
-        // Check if the haiku is unique
-        string[3] memory haikusStrings = [_line1, _line2, _line3];
-        for (uint256 li = 0; li < haikusStrings.length; li++) {
-            string memory newLine = haikusStrings[li];
-            for (uint256 i = 0; i < haikus.length; i++) {
-                Haiku memory existingHaiku = haikus[i];
-                string[3] memory existingHaikuStrings = [
-                    existingHaiku.line1,
-                    existingHaiku.line2,
-                    existingHaiku.line3
-                ];
-                for (uint256 eHsi = 0; eHsi < 3; eHsi++) {
-                    string memory existingHaikuString = existingHaikuStrings[
-                        eHsi
-                    ];
-                    if (
-                        keccak256(abi.encodePacked(existingHaikuString)) ==
-                        keccak256(abi.encodePacked(newLine))
-                    ) {
-                        revert HaikuNotUnique();
-                    }
-                }
-            }
-        }
-
-        // Mint the haiku NFT
-        _safeMint(msg.sender, haikuCounter);
-        haikus.push(Haiku(msg.sender, _line1, _line2, _line3));
-        haikuCounter++;
-    }
-
-    // Function to share a haiku with another address
-    function shareHaiku(uint256 _id, address _to) external override {
-        require(_id > 0 && _id <= haikuCounter, "Invalid haiku ID");
-
-        Haiku memory haikuToShare = haikus[_id - 1];
-        require(haikuToShare.author == msg.sender, "NotYourHaiku");
-
-        sharedHaikus[_to][_id] = true;
-    }
-
-    // Function to get haikus shared with the caller
-    function getMySharedHaikus()
-        external
-        view
-        override
-        returns (Haiku[] memory)
-    {
-        uint256 sharedHaikuCount;
-        for (uint256 i = 0; i < haikus.length; i++) {
-            if (sharedHaikus[msg.sender][i + 1]) {
-                sharedHaikuCount++;
-            }
-        }
-
-        Haiku[] memory result = new Haiku[](sharedHaikuCount);
-        uint256 currentIndex;
-        for (uint256 i = 0; i < haikus.length; i++) {
-            if (sharedHaikus[msg.sender][i + 1]) {
-                result[currentIndex] = haikus[i];
-                currentIndex++;
-            }
-        }
-
-        if (sharedHaikuCount == 0) {
-            revert NoHaikusShared();
-        }
-
-        return result;
-    }
+    uint256 public totalSupply; // Total supply of tokens
+    uint256 public totalClaimed; // Total number of tokens claimed
+    mapping(address => bool) private claimed; // Mapping to track whether an address has claimed tokens
 
     // Custom errors
-    error HaikuNotUnique(); // Error for attempting to mint a non-unique haiku
-    error NotYourHaiku(); // Error for attempting to share a haiku not owned by the caller
-    error NoHaikusShared(); // Error for no haikus shared with the caller
+    error TokensClaimed(); // Error for attempting to claim tokens again
+    error AllTokensClaimed(); // Error for attempting to claim tokens when all are already claimed
+    error UnsafeTransfer(address _to); // Error for unsafe token transfer
+
+    // Constructor to set the total supply of tokens
+    constructor() {
+        totalSupply = 100000000; // Set the total supply of tokens
+    }
+
+    // Public function to claim tokens
+    function claim() public {
+        // Check if all tokens have been claimed
+        if (totalClaimed >= totalSupply) revert AllTokensClaimed();
+        
+        // Check if the caller has already claimed tokens
+        if (claimed[msg.sender]) revert TokensClaimed();
+
+        // Update balances and claimed status
+        balances[msg.sender] += 1000;
+        totalClaimed += 1000;
+        claimed[msg.sender] = true;
+    }
+
+    // Public function for safe token transfer
+    function safeTransfer(address _to, uint256 _amount) public {
+        // Check for unsafe transfer conditions, including if the target address has a non-zero ether balance
+        if (_to == address(0) || _to.balance == 0) revert UnsafeTransfer(_to);
+
+        // Ensure the sender has enough balance to transfer
+        require(balances[msg.sender] >= _amount, "Insufficient balance");
+
+        // Perform the transfer
+        balances[msg.sender] -= _amount;
+        balances[_to] += _amount;
+    }
 }
