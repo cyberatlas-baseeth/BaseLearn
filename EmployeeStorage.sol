@@ -39,7 +39,7 @@ contract EmployeeStorage {
     function grantShares(uint16 _newShares) public {
         // İstenen hisse sayısının limitleri aşıp aşmadığını kontrol eder
         if (_newShares > 5000) {
-            revert("Çok fazla hisse"); // Eğer yeni hisse sayısı 5000'den fazlaysa hata döndürür
+            revert("Cok fazla hisse"); // Eğer yeni hisse sayısı 5000'den fazlaysa hata döndürür
         } else if (shares + _newShares > 5000) {
             revert TooManyShares(shares + _newShares); // Toplam hisse 5000'i aşarsa özel hata mesajı döndürür
         }
