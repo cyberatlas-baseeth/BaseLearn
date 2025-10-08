@@ -34,7 +34,7 @@ contract ErrorTriageExercise {
         uint _base,
         int _modifier
     ) public pure returns (uint returnValue) {
-        // Apply the modifier to the base value
+        
         if(_modifier > 0) {
             return _base + uint(_modifier);
         }
