@@ -1,54 +1,60 @@
 // SPDX-License-Identifier: MIT
+// Kodun lisansını belirtir. Bu sözleşme MIT lisansı altında yayınlanmıştır ve açık kaynak olarak kullanılabilir.
+
 pragma solidity ^0.8.17;
+// Solidity derleyicisinin sürümünü belirtir. Bu kod, 0.8.17 veya daha yeni bir sürümle derlenmelidir.
 
 contract EmployeeStorage {
-    // Çalışan verilerini saklamak için özel durum değişkenleri tanımlayın
-    uint16 private shares; // Çalışanın sahip olduğu hisse sayısı (sözleşmeye özel)
-    uint32 private salary; // Çalışanın aylık maaşı (sözleşmeye özel)
-    uint256 public idNumber; // Çalışanın benzersiz kimlik numarası (herkese açık)
-    string public name; // Çalışanın adı (herkese açık)
+    // Çalışan verilerini saklamak için bir akıllı sözleşme tanımlar.
 
-    // Sözleşme dağıtıldığında çalışan verilerini başlatmak için yapıcı fonksiyon
+    // Özel (private) durum değişkenleri, çalışan verilerini saklar
+    uint16 private shares; // Çalışanın sahip olduğu hisse sayısı (sadece sözleşme içinde erişilebilir)
+    uint32 private salary; // Çalışanın aylık maaşı (sadece sözleşme içinde erişilebilir)
+    uint256 public idNumber; // Çalışanın benzersiz kimlik numarası (herkese açık, dışarıdan erişilebilir)
+    string public name; // Çalışanın adı (herkese açık, dışarıdan erişilebilir)
+
+    // Sözleşme dağıtıldığında çalışan verilerini başlatmak için kullanılan yapıcı (constructor) fonksiyon
     constructor(uint16 _shares, string memory _name, uint32 _salary, uint _idNumber) {
-        shares = _shares; // Hisse sayısını başlat
-        name = _name; // Adı başlat
-        salary = _salary; // Maaşı başlat
-        idNumber = _idNumber; // Kimlik numarasını başlat
+        shares = _shares; // Hisse sayısını başlatır
+        name = _name; // Çalışan adını başlatır
+        salary = _salary; // Maaşı başlatır
+        idNumber = _idNumber; // Kimlik numarasını başlatır
     }
 
-    // Çalışanın sahip olduğu hisse sayısını almak için görüntüleme fonksiyonu
+    // Çalışanın hisse sayısını döndüren bir görüntüleme (view) fonksiyonu
     function viewShares() public view returns (uint16) {
-        return shares;
+        return shares; // Çalışanın sahip olduğu hisse sayısını döndürür
     }
     
-    // Çalışanın aylık maaşını almak için görüntüleme fonksiyonu
+    // Çalışanın aylık maaşını döndüren bir görüntüleme (view) fonksiyonu
     function viewSalary() public view returns (uint32) {
-        return salary;
+        return salary; // Çalışanın maaşını döndürür
     }
 
-    // Özel hata bildirimi
+    // Özel hata tanımı
     error TooManyShares(uint16 _shares);
+    // Çok fazla hisse verilmeye çalışıldığında kullanılacak bir hata mesajı tanımlar
     
-    // Çalışana ek hisse vermek için fonksiyon
+    // Çalışana ek hisse veren fonksiyon
     function grantShares(uint16 _newShares) public {
-        // Talep edilen hisse sayısının limiti aşıp aşmadığını kontrol et
+        // İstenen hisse sayısının limitleri aşıp aşmadığını kontrol eder
         if (_newShares > 5000) {
-            revert("Cok fazla hisse"); // Hata mesajıyla işlemi geri al
+            revert("Çok fazla hisse"); // Eğer yeni hisse sayısı 5000'den fazlaysa hata döndürür
         } else if (shares + _newShares > 5000) {
-            revert TooManyShares(shares + _newShares); // Özel hata mesajıyla işlemi geri al
+            revert TooManyShares(shares + _newShares); // Toplam hisse 5000'i aşarsa özel hata mesajı döndürür
         }
-        shares += _newShares; // Yeni hisseleri ver
+        shares += _newShares; // Yeni hisseleri çalışanın mevcut hisselerine ekler
     }
 
     // Depolama değişkenlerinin paketlenmesini test etmek için kullanılan fonksiyon (ana işlevsellikle ilgili değil)
     function checkForPacking(uint _slot) public view returns (uint r) {
         assembly {
-            r := sload (_slot)
+            r := sload (_slot) // Belirtilen depolama yuvasındaki (slot) veriyi okur
         }
     }
 
-    // Hata ayıklama amacıyla hisseleri sıfırlama fonksiyonu (ana işlevsellikle ilgili değil)
+    // Hata ayıklama (debug) amacıyla hisse sayısını sıfırlayan fonksiyon (ana işlevsellikle ilgili değil)
     function debugResetShares() public {
-        shares = 1000; // Hisseleri 1000'e sıfırla
+        shares = 1000; // Hisse sayısını 1000 olarak sıfırlar
     }
 }
