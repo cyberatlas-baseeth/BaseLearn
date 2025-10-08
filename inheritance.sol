@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.17;
 
 /**
- * @title Çalışan
- * @dev Çalışanlar için ortak özellikler ve davranışları tanımlayan soyut sözleşme.
+ * @title Employee
+ * @dev Çalışanlara ait ortak özellikleri ve davranışları tanımlayan soyut (abstract) sözleşme.
  */
 abstract contract Employee {
-    uint public idNumber; // Çalışanın benzersiz tanımlayıcısı
-    uint public managerId; // Çalışanı denetleyen yöneticinin tanımlayıcısı
+    uint public idNumber;   // Çalışanın benzersiz kimlik numarası
+    uint public managerId;  // Çalışanı yöneten yöneticinin kimlik numarası
 
     /**
-     * @dev idNumber ve managerId'yi başlatan yapıcı fonksiyon.
-     * @param _idNumber Çalışanın benzersiz tanımlayıcısı.
-     * @param _managerId Çalışanı denetleyen yöneticinin tanımlayıcısı.
+     * @dev Kurucu fonksiyon (constructor), idNumber ve managerId değerlerini başlatır.
+     * @param _idNumber Çalışanın benzersiz kimlik numarası.
+     * @param _managerId Çalışanı yöneten yöneticinin kimlik numarası.
      */
     constructor(uint _idNumber, uint _managerId) {
         idNumber = _idNumber;
@@ -21,23 +20,24 @@ abstract contract Employee {
     }
 
     /**
-     * @dev Türetilmiş sözleşmeler tarafından uygulanması gereken, çalışanın yıllık maliyetini döndüren soyut fonksiyon.
+     * @dev Alt sözleşmeler tarafından uygulanması gereken soyut fonksiyon.
+     * Çalışanın yıllık maliyetini döndürür.
      * @return Çalışanın yıllık maliyeti.
      */
     function getAnnualCost() public virtual returns (uint);
 }
 
 /**
- * @title Maaşlı
- * @dev Yıllık maaş alan çalışanları temsil eden sözleşme.
+ * @title Salaried
+ * @dev Yıllık maaş ile çalışan çalışanları temsil eden sözleşme.
  */
 contract Salaried is Employee {
     uint public annualSalary; // Çalışanın yıllık maaşı
 
     /**
-     * @dev Maaşlı sözleşmeyi başlatan yapıcı fonksiyon.
-     * @param _idNumber Çalışanın benzersiz tanımlayıcısı.
-     * @param _managerId Çalışanı denetleyen yöneticinin tanımlayıcısı.
+     * @dev Kurucu fonksiyon, Salaried sözleşmesini başlatır.
+     * @param _idNumber Çalışanın benzersiz kimlik numarası.
+     * @param _managerId Çalışanı yöneten yöneticinin kimlik numarası.
      * @param _annualSalary Çalışanın yıllık maaşı.
      */
     constructor(uint _idNumber, uint _managerId, uint _annualSalary) Employee(_idNumber, _managerId) {
@@ -45,7 +45,7 @@ contract Salaried is Employee {
     }
 
     /**
-     * @dev Çalışanın yıllık maaşını döndürmek için getAnnualCost fonksiyonunu geçersiz kılar.
+     * @dev getAnnualCost fonksiyonunu override ederek çalışanın yıllık maaşını döndürür.
      * @return Çalışanın yıllık maaşı.
      */
     function getAnnualCost() public override view returns (uint) {
@@ -54,16 +54,16 @@ contract Salaried is Employee {
 }
 
 /**
- * @title Saatlik
- * @dev Saatlik ücret alan çalışanları temsil eden sözleşme.
+ * @title Hourly
+ * @dev Saatlik ücret ile çalışan çalışanları temsil eden sözleşme.
  */
 contract Hourly is Employee {
     uint public hourlyRate; // Çalışanın saatlik ücreti
 
     /**
-     * @dev Saatlik sözleşmeyi başlatan yapıcı fonksiyon.
-     * @param _idNumber Çalışanın benzersiz tanımlayıcısı.
-     * @param _managerId Çalışanı denetleyen yöneticinin tanımlayıcısı.
+     * @dev Kurucu fonksiyon, Hourly sözleşmesini başlatır.
+     * @param _idNumber Çalışanın benzersiz kimlik numarası.
+     * @param _managerId Çalışanı yöneten yöneticinin kimlik numarası.
      * @param _hourlyRate Çalışanın saatlik ücreti.
      */
     constructor(uint _idNumber, uint _managerId, uint _hourlyRate) Employee(_idNumber, _managerId) {
@@ -71,8 +71,9 @@ contract Hourly is Employee {
     }
 
     /**
-     * @dev Saatlik ücrete göre yıllık maliyeti hesaplamak için getAnnualCost fonksiyonunu geçersiz kılar.
-     * Yıllık tam zamanlı çalışma süresi 2080 saat olarak varsayılır.
+     * @dev getAnnualCost fonksiyonunu override eder.
+     * Saatlik ücret üzerinden yıllık maliyeti hesaplar.
+     * (Tam zamanlı çalışanın yılda 2080 saat çalıştığı varsayılır.)
      * @return Çalışanın yıllık maliyeti.
      */
     function getAnnualCost() public override view returns (uint) {
@@ -81,22 +82,22 @@ contract Hourly is Employee {
 }
 
 /**
- * @title Yönetici
- * @dev Çalışan kimliklerinin bir listesini yöneten sözleşme.
+ * @title Manager
+ * @dev Yöneticilerin yönettiği çalışan kimliklerini tutan sözleşme.
  */
 contract Manager {
-    uint[] public employeeIds; // Çalışan kimliklerinin listesi
+    uint[] public employeeIds; // Yöneticinin raporladığı çalışanların kimlik numaraları listesi
 
     /**
-     * @dev Yeni bir çalışan kimliğini listeye ekleyen fonksiyon.
-     * @param _reportId Eklenecek çalışanın kimliği.
+     * @dev Yeni bir çalışan kimliğini listeye ekler.
+     * @param _reportId Eklenecek çalışanın kimlik numarası.
      */
     function addReport(uint _reportId) public {
         employeeIds.push(_reportId);
     }
 
     /**
-     * @dev Çalışan kimlikleri listesini sıfırlayan fonksiyon.
+     * @dev Çalışan kimlikleri listesini sıfırlar (boşaltır).
      */
     function resetReports() public {
         delete employeeIds;
@@ -104,14 +105,14 @@ contract Manager {
 }
 
 /**
- * @title SatışTemsilcisi
- * @dev Saatlik ücret alan satış temsilcilerini temsil eden sözleşme.
+ * @title Salesperson
+ * @dev Saatlik ücretle çalışan satış personelini temsil eden sözleşme.
  */
 contract Salesperson is Hourly {
     /**
-     * @dev SatışTemsilcisi sözleşmesini başlatan yapıcı fonksiyon.
-     * @param _idNumber Çalışanın benzersiz tanımlayıcısı.
-     * @param _managerId Çalışanı denetleyen yöneticinin tanımlayıcısı.
+     * @dev Salesperson sözleşmesini başlatır.
+     * @param _idNumber Çalışanın benzersiz kimlik numarası.
+     * @param _managerId Çalışanı yöneten yöneticinin kimlik numarası.
      * @param _hourlyRate Çalışanın saatlik ücreti.
      */
     constructor(uint _idNumber, uint _managerId, uint _hourlyRate) 
@@ -119,14 +120,14 @@ contract Salesperson is Hourly {
 }
 
 /**
- * @title MühendislikYöneticisi
- * @dev Yıllık maaş alan ve yönetim sorumlulukları olan mühendislik yöneticilerini temsil eden sözleşme.
+ * @title EngineeringManager
+ * @dev Maaşlı çalışan olup aynı zamanda yönetici olan mühendislik yöneticisini temsil eden sözleşme.
  */
 contract EngineeringManager is Salaried, Manager {
     /**
-     * @dev MühendislikYöneticisi sözleşmesini başlatan yapıcı fonksiyon.
-     * @param _idNumber Çalışanın benzersiz tanımlayıcısı.
-     * @param _managerId Çalışanı denetleyen yöneticinin tanımlayıcısı.
+     * @dev EngineeringManager sözleşmesini başlatır.
+     * @param _idNumber Çalışanın benzersiz kimlik numarası.
+     * @param _managerId Çalışanı yöneten yöneticinin kimlik numarası.
      * @param _annualSalary Çalışanın yıllık maaşı.
      */
     constructor(uint _idNumber, uint _managerId, uint _annualSalary) 
@@ -134,17 +135,17 @@ contract EngineeringManager is Salaried, Manager {
 }
 
 /**
- * @title KalıtımGönderimi
- * @dev SatışTemsilcisi ve MühendislikYöneticisi örneklerini dağıtmak için sözleşme.
+ * @title InheritanceSubmission
+ * @dev Salesperson ve EngineeringManager sözleşmelerinin örneklerini tutan sözleşme.
  */
 contract InheritanceSubmission {
-    address public salesPerson; // Dağıtılmış SatışTemsilcisi örneğinin adresi
-    address public engineeringManager; // Dağıtılmış MühendislikYöneticisi örneğinin adresi
+    address public salesPerson;         // Dağıtılan Salesperson sözleşmesinin adresi
+    address public engineeringManager;  // Dağıtılan EngineeringManager sözleşmesinin adresi
 
     /**
-     * @dev KalıtımGönderimi sözleşmesini başlatan yapıcı fonksiyon.
-     * @param _salesPerson Dağıtılmış SatışTemsilcisi örneğinin adresi.
-     * @param _engineeringManager Dağıtılmış MühendislikYöneticisi örneğinin adresi.
+     * @dev InheritanceSubmission sözleşmesini başlatır.
+     * @param _salesPerson Dağıtılmış Salesperson sözleşmesinin adresi.
+     * @param _engineeringManager Dağıtılmış EngineeringManager sözleşmesinin adresi.
      */
     constructor(address _salesPerson, address _engineeringManager) {
         salesPerson = _salesPerson;
