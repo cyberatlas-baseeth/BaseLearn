@@ -52,7 +52,8 @@ contract ErrorTriageExercise {
         }
     }
 
-    // The utility functions below are working as expected
+    
+
     function addToArr(uint _num) public {
         arr.push(_num);
     }
