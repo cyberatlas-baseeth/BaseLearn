@@ -2,34 +2,34 @@
 pragma solidity ^0.8.17;
 
 contract EmployeeStorage {
-    // Declare private state variables to store employee data
-    uint16 private shares; // Number of shares owned by the employee (private to contract)
-    uint32 private salary; // Monthly salary of the employee (private to contract)
-    uint256 public idNumber; // Unique identification number of the employee (publicly accessible)
-    string public name; // Name of the employee (publicly accessible)
+    // Çalışan verilerini depolamak için özel durum değişkenlerini tanımla
+    uint16 private shares; // Çalışanın sahip olduğu pay sayısı (sözleşmeye özel)
+    uint32 private salary; // Çalışanın aylık maaşı (sözleşmeye özel)
+    uint256 public idNumber; // Çalışanın benzersiz kimlik numarası (herkese açık)
+    string public name; // Çalışanın ismi (herkese açık)
 
-    // Constructor to initialize employee data when contract is deployed
+    // Sözleşme dağıtıldığında çalışan verilerini başlatmak için constructor
     constructor(uint16 _shares, string memory _name, uint32 _salary, uint _idNumber) {
-        shares = _shares; // Initialize shares
-        name = _name; // Initialize name
-        salary = _salary; // Initialize salary
-        idNumber = _idNumber; // Initialize idNumber
+        shares = _shares; // Payları başlat
+        name = _name; // İsmi başlat
+        salary = _salary; // Maaşı başlat
+        idNumber = _idNumber; // Kimlik numarasını başlat
     }
 
-    // View function to retrieve the number of shares owned by the employee
+    // Çalışanın sahip olduğu pay sayısını almak için görünüm fonksiyonu
     function viewShares() public view returns (uint16) {
         return shares;
     }
     
-    // View function to retrieve the monthly salary of the employee
+    // Çalışanın aylık maaşını almak için görünüm fonksiyonu
     function viewSalary() public view returns (uint32) {
         return salary;
     }
 
-    // Custom error declaration
+    // Özel hata bildirimi
     error TooManyShares(uint16 _shares);
     
-    // Function to grant additional shares to the employee
+    // Çalışana ek paylar verme fonksiyonu
     function grantShares(uint16 _newShares) public {
         // Check if the requested shares exceed the limit
         if (_newShares > 5000) {
@@ -40,14 +40,14 @@ contract EmployeeStorage {
         shares += _newShares; // Grant the new shares
     }
 
-    // Function used for testing packing of storage variables (not relevant to main functionality)
+    // Depolama değişkenlerinin paketlenmesini test etmek için kullanılan fonksiyon (ana işlevsellikle ilgili değil)
     function checkForPacking(uint _slot) public view returns (uint r) {
         assembly {
             r := sload (_slot)
         }
     }
 
-    // Function to reset shares for debugging purposes (not relevant to main functionality)
+    // Hata ayıklama amaçları için payları sıfırlama fonksiyonu (ana işlevsellikle ilgili değil)
     function debugResetShares() public {
         shares = 1000; // Reset shares to 1000
     }
