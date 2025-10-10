@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // ERC20 token kullanarak ağırlıklı oylama için sözleşme
 contract WeightedVoting is ERC20 {
-    string private salt = "value"; // A private string variable
-    using EnumerableSet for EnumerableSet.AddressSet; // Importing EnumerableSet for address set functionality
+    string private salt = "value"; // A private string değişkeni
+    using EnumerableSet for EnumerableSet.AddressSet; // Adres kümesi işlevselliği için EnumerableSet'i içe aktarma
 
     // Özel hatalar
     error TokensClaimed(); // Tekrar token talep etmeye çalışma hatası
