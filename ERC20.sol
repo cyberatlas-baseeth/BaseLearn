@@ -1,110 +1,110 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-// Importing OpenZeppelin contracts for ERC20 and EnumerableSet functionalities
+// OpenZeppelin sözleşmelerini ERC20 ve EnumerableSet işlevsellikleri için içe aktarma
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-// Contract for weighted voting using ERC20 token
+// ERC20 token kullanarak ağırlıklı oylama için sözleşme
 contract WeightedVoting is ERC20 {
     string private salt = "value"; // A private string variable
     using EnumerableSet for EnumerableSet.AddressSet; // Importing EnumerableSet for address set functionality
 
-    // Custom errors
-    error TokensClaimed(); // Error for attempting to claim tokens again
-    error AllTokensClaimed(); // Error for attempting to claim tokens when all are already claimed
-    error NoTokensHeld(); // Error for attempting to perform an action without holding tokens
-    error QuorumTooHigh(); // Error for setting a quorum higher than total supply
-    error AlreadyVoted(); // Error for attempting to vote more than once
-    error VotingClosed(); // Error for attempting to vote on a closed issue
+    // Özel hatalar
+    error TokensClaimed(); // Tekrar token talep etmeye çalışma hatası
+    error AllTokensClaimed(); // Tüm tokenlar zaten talep edilmişken token talep etmeye çalışma hatası
+    error NoTokensHeld(); // Token sahibi olmadan bir işlem yapmaya çalışma hatası
+    error QuorumTooHigh(); // Nisabı toplam arzın üzerinde ayarlama hatası
+    error AlreadyVoted(); // Birden fazla oy verme hatası
+    error VotingClosed(); // Kapalı bir konuda oy kullanmaya çalışma hatası
 
-    // Struct to represent an issue
+    // Bir konuyu temsil eden yapı
     struct Issue {
-        EnumerableSet.AddressSet voters; // Set of voters
-        string issueDesc; // Description of the issue
-        uint256 quorum; // Quorum required to close the issue
-        uint256 totalVotes; // Total number of votes casted
-        uint256 votesFor; // Total number of votes in favor
-        uint256 votesAgainst; // Total number of votes against
-        uint256 votesAbstain; // Total number of abstained votes
-        bool passed; // Flag indicating if the issue passed
-        bool closed; // Flag indicating if the issue is closed
+        EnumerableSet.AddressSet voters; // // Oy verenlerin kümesi
+        string issueDesc; // Konunun açıklaması
+        uint256 quorum; // Konunun kapanması için gereken nisap
+        uint256 totalVotes; // Kullanılan toplam oy sayısı
+        uint256 votesFor; // Lehte kullanılan toplam oy sayısı
+        uint256 votesAgainst; // Aleyhte kullanılan toplam oy sayısı
+        uint256 votesAbstain; // Çekimser kullanılan toplam oy sayısı
+        bool passed; // Konunun geçip geçmediğini gösteren bayrak
+        bool closed; // Konunun kapalı olup olmadığını gösteren bayrak
     }
 
-    // Struct to represent a serialized issue
+    // Serileştirilmiş bir konuyu temsil eden yapı
     struct SerializedIssue {
-        address[] voters; // Array of voters
-        string issueDesc; // Description of the issue
-        uint256 quorum; // Quorum required to close the issue
-        uint256 totalVotes; // Total number of votes casted
-        uint256 votesFor; // Total number of votes in favor
-        uint256 votesAgainst; // Total number of votes against
-        uint256 votesAbstain; // Total number of abstained votes
-        bool passed; // Flag indicating if the issue passed
-        bool closed; // Flag indicating if the issue is closed
+        address[] voters; // Oy verenlerin dizisi
+        string issueDesc; // Konunun açıklaması
+        uint256 quorum; // Konunun kapanması için gereken nisap
+        uint256 totalVotes; // Kullanılan toplam oy sayısı
+        uint256 votesFor; // Lehte kullanılan toplam oy sayısı
+        uint256 votesAgainst; // Aleyhte kullanılan toplam oy sayısı
+        uint256 votesAbstain; // Çekimser kullanılan toplam oy sayısı
+        bool passed; // Konunun geçip geçmediğini gösteren bayrak
+        bool closed; // Konunun kapalı olup olmadığını gösteren bayrak
     }
 
-    // Enum to represent different vote options
+    // Farklı oy seçeneklerini temsil eden enum
     enum Vote {
         AGAINST,
         FOR,
         ABSTAIN
     }
 
-    // Array to store all issues
+    // Tüm konuları saklamak için dizi
     Issue[] internal issues;
 
-    // Mapping to track if tokens are claimed by an address
+    // Bir adresin tokenları talep edip etmediğini izlemek için eşleme
     mapping(address => bool) public tokensClaimed;
 
-    uint256 public maxSupply = 1000000; // Maximum supply of tokens
-    uint256 public claimAmount = 100; // Amount of tokens to be claimed
+    uint256 public maxSupply = 1000000; // Tokenların maksimum arzı
+    uint256 public claimAmount = 100; // Talep edilen Token
 
-    string saltt = "any"; // Another string variable
+    string saltt = "any"; // Başka bir string değişkeni
 
-    // Constructor to initialize ERC20 token with a name and symbol
+    // ERC20 tokenini bir isim ve sembolle başlatmak için constructor
     constructor(string memory _name, string memory _symbol)
         ERC20(_name, _symbol)
     {
-        issues.push(); // Pushing an empty issue to start from index 1
+        issues.push(); 
     }
 
-    // Function to claim tokens
+    // Token talep etme fonksiyonu
     function claim() public {
-        // Check if all tokens have been claimed
+        // Tüm tokenlerin talep edilip edilmediğini kontrol et
         if (totalSupply() + claimAmount > maxSupply) {
             revert AllTokensClaimed();
         }
-        // Check if the caller has already claimed tokens
+        // Kullanıcının zaten token talep edip etmediğini kontrol et
         if (tokensClaimed[msg.sender]) {
             revert TokensClaimed();
         }
-        // Mint tokens to the caller
+        // Token bas
         _mint(msg.sender, claimAmount);
         tokensClaimed[msg.sender] = true; // Mark tokens as claimed
     }
 
-    // Function to create a new voting issue
+    // Yeni bir oylama konusu oluşturma fonksiyonu
     function createIssue(string calldata _issueDesc, uint256 _quorum)
         external
         returns (uint256)
     {
-        // Check if the caller holds any tokens
+        // Kullanıcının herhangi bir token tutup tutmadığını kontrol et
         if (balanceOf(msg.sender) == 0) {
             revert NoTokensHeld();
         }
-        // Check if the specified quorum is higher than total supply
+        // Belirtilen nisabın toplam arzı aşıp aşmadığını kontrol et
         if (_quorum > totalSupply()) {
             revert QuorumTooHigh();
         }
-        // Create a new issue and return its index
+        // Yeni bir konu oluştur ve onun indeksini döndür
         Issue storage _issue = issues.push();
         _issue.issueDesc = _issueDesc;
         _issue.quorum = _quorum;
         return issues.length - 1;
     }
 
-    // Function to get details of a voting issue
+    // Bir oylama konusunun detaylarını alma fonksiyonu
     function getIssue(uint256 _issueId)
         external
         view
@@ -125,26 +125,26 @@ contract WeightedVoting is ERC20 {
             });
     }
 
-    // Function to cast a vote on a voting issue
+    // Bir oylama konusunda oy kullanma fonksiyonu
     function vote(uint256 _issueId, Vote _vote) public {
         Issue storage _issue = issues[_issueId];
 
-        // Check if the issue is closed
+        // Konunun kapalı olup olmadığını kontrol et
         if (_issue.closed) {
             revert VotingClosed();
         }
-        // Check if the caller has already voted
+        // Kullanıcının zaten oy kullanıp kullanmadığını kontrol et
         if (_issue.voters.contains(msg.sender)) {
             revert AlreadyVoted();
         }
 
         uint256 nTokens = balanceOf(msg.sender);
-        // Check if the caller holds any tokens
+        // CKullanıcının herhangi bir token tutup tutmadığını kontrol et
         if (nTokens == 0) {
             revert NoTokensHeld();
         }
 
-        // Update vote counts based on the vote option
+        // Oy seçeneğine göre oy sayılarını güncelle
         if (_vote == Vote.AGAINST) {
             _issue.votesAgainst += nTokens;
         } else if (_vote == Vote.FOR) {
@@ -153,11 +153,11 @@ contract WeightedVoting is ERC20 {
             _issue.votesAbstain += nTokens;
         }
 
-        // Add the caller to the list of voters and update total votes count
+        // Kullanıcının oy kullananlar listesine ekle ve toplam oy sayısını güncelle
         _issue.voters.add(msg.sender);
         _issue.totalVotes += nTokens;
 
-        // Close the issue if quorum is reached and determine if it passed
+        // Nisap sağlanmışsa konuyu kapat ve geçip geçmediğini belirle
         if (_issue.totalVotes >= _issue.quorum) {
             _issue.closed = true;
             if (_issue.votesFor > _issue.votesAgainst) {
