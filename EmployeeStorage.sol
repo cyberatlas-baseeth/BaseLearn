@@ -31,7 +31,7 @@ contract EmployeeStorage {
     
     // Çalışana ek paylar verme fonksiyonu
     function grantShares(uint16 _newShares) public {
-        // Check if the requested shares exceed the limit
+        // Talep edilen payların limiti aşıp aşmadığını kontrol et.
         if (_newShares > 5000) {
             revert("Too many shares"); // Revert with error message
         } else if (shares + _newShares > 5000) {
