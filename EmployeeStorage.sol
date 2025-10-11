@@ -33,9 +33,9 @@ contract EmployeeStorage {
     function grantShares(uint16 _newShares) public {
         // Talep edilen payların limiti aşıp aşmadığını kontrol et.
         if (_newShares > 5000) {
-            revert("Too many shares"); // Revert with error message
+            revert("Too many shares"); //Hata mesajıyla geri dön.
         } else if (shares + _newShares > 5000) {
-            revert TooManyShares(shares + _newShares); // Revert with custom error message
+            revert TooManyShares(shares + _newShares); //Özel hata mesajıyla geri dön.
         }
         shares += _newShares; // Grant the new shares
     }
@@ -49,6 +49,6 @@ contract EmployeeStorage {
 
     // Hata ayıklama amaçları için payları sıfırlama fonksiyonu (ana işlevsellikle ilgili değil)
     function debugResetShares() public {
-        shares = 1000; // Reset shares to 1000
+        shares = 1000; //Payları 1000'e sıfırla.
     }
 }
