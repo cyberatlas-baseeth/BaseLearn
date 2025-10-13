@@ -4,7 +4,7 @@ pragma solidity ^0.8.8;
 import "./AddressBook.sol";
 // Yeni AddressBook örnekleri oluşturmak için sözleşme
 contract AddressBookFactory {
-    // Dahili kullanım için özel bir tuz değeri tanımla
+    // Dahili kullanım için özel bir salt değeri tanımla
     string private salt = "value";
     // Yeni bir AddressBook örneği dağıtmak için fonksiyon
     function deploy() external returns (AddressBook) {
